@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '@/config/endpoints';
+import { AUTH_TOKEN_STORAGE_KEY, clearAuthSession } from '@/lib/authSession';
 
 export class ApiError extends Error {
   status: number;
@@ -20,7 +21,6 @@ export interface HttpRequestOptions extends Omit<RequestInit, 'body'> {
   timeoutMs?: number;
 }
 
-const TOKEN_STORAGE_KEY = 'utm_desk_token';
 const DEFAULT_TIMEOUT_MS = 60_000; // 60s: el backend en Render duerme y puede tardar en despertar
 
 function buildUrl(path: string, query?: Record<string, QueryValue>): string {
@@ -36,7 +36,7 @@ function buildUrl(path: string, query?: Record<string, QueryValue>): string {
 
 function authHeaders(): HeadersInit {
   if (typeof window === 'undefined') return {};
-  const token = window.localStorage.getItem(TOKEN_STORAGE_KEY);
+  const token = window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -108,6 +108,9 @@ export async function httpClient<T>(
     const parsed = await parseBody(response);
 
     if (!response.ok) {
+      if (response.status === 401 && path !== '/api/auth/login') {
+        clearAuthSession();
+      }
       throw new ApiError(
         messageFromBody(parsed, `Error ${response.status} al llamar ${path}`),
         response.status,

@@ -6,6 +6,8 @@ export const metadata: Metadata = {
   description: "Análisis de las fallas más recurrentes del campus.",
 };
 
+export const instant = false;
+
 export default function RecurringFailuresPage() {
   return <RecurringFailures />;
 }

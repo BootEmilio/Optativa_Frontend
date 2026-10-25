@@ -1,7 +1,9 @@
 "use client";
 
+import type { AnalystPeriod } from "@/services/analistaService";
+
 export type ReportFiltersValue = {
-  period: string;
+  period: AnalystPeriod;
   category: string;
   building: string;
   priority: string;
@@ -38,11 +40,11 @@ export default function ReportFilters({
             Filtros de consulta
           </h2>
           <p className="mt-1 text-sm text-slate-500">
-            Colección de referencia: tickets_utm_2025
+            Ajusta los criterios para consultar el backend.
           </p>
         </div>
         <span className="rounded-md bg-[#eef7f6] px-2.5 py-1 text-xs font-medium text-[#00685f]">
-          Datos de demostración
+          Datos en tiempo real
         </span>
       </div>
 
@@ -54,10 +56,10 @@ export default function ReportFilters({
             onChange={(event) => updateFilter("period", event.target.value)}
             value={value.period}
           >
-            <option value="Últimos 30 días">Últimos 30 días</option>
-            <option value="Semestre actual">Semestre actual</option>
-            <option value="Últimos 7 días">Últimos 7 días</option>
-            <option value="Año 2025">Año 2025</option>
+            <option value="this_month">Este mes</option>
+            <option value="last_month">Mes pasado</option>
+            <option value="last_30_days">Últimos 30 días</option>
+            <option value="last_7_days">Últimos 7 días</option>
           </select>
         </label>
         <label className="text-sm font-medium text-slate-700">
@@ -68,9 +70,9 @@ export default function ReportFilters({
             value={value.category}
           >
             <option value="all">Todas</option>
-            <option value="Cómputo y redes">Cómputo y redes</option>
-            <option value="Infraestructura">Infraestructura</option>
-            <option value="Académico">Académico</option>
+            <option value="computo_redes">Cómputo y redes</option>
+            <option value="infraestructura">Infraestructura</option>
+            <option value="academico">Académico</option>
           </select>
         </label>
         <label className="text-sm font-medium text-slate-700">
@@ -99,9 +101,10 @@ export default function ReportFilters({
             value={value.priority}
           >
             <option value="all">Todas</option>
-            <option value="Alta">Alta</option>
-            <option value="Media">Media</option>
-            <option value="Baja">Baja</option>
+            <option value="alta">Alta</option>
+            <option value="media">Media</option>
+            <option value="baja">Baja</option>
+            <option value="critica">Crítica</option>
           </select>
         </label>
       </div>

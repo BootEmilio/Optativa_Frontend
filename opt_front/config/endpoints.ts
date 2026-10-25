@@ -16,6 +16,7 @@ export const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS === 'true';
 
 export const endpoints = {
   auth: {
+    login: '/api/auth/login',
     // TODO: Endpoint de usuario actual/sesión cuando backend lo implemente
     me: '/api/auth/me',
   },
@@ -38,6 +39,15 @@ export const endpoints = {
       `/api/incidencias/${encodeURIComponent(id)}/tags`,
     tag: (id: string, tag: string) =>
       `/api/incidencias/${encodeURIComponent(id)}/tags/${encodeURIComponent(tag)}`,
+  },
+  analista: {
+    dashboard: '/api/analista/dashboard',
+    summary: '/api/analista/summary',
+    incidentsByCategory: '/api/analista/incidents-by-category',
+    incidentsByStatus: '/api/analista/incidents-by-status',
+    reports: '/api/analista/reports',
+    resolutionTimes: '/api/analista/resolution-times',
+    recurringFailures: '/api/analista/recurring-failures',
   },
   incidencias: {
     list: '/api/incidencias',

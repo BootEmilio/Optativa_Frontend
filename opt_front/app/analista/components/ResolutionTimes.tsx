@@ -1,30 +1,33 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import {
+  getResolutionTimes,
+  nestedRecord,
+  readNumber,
+  readRows,
+  readText,
+  type ApiRecord,
+} from "@/services/analistaService";
+import { ApiError } from "@/lib/httpClient";
+import { API_BASE_URL, endpoints } from "@/config/endpoints";
 import StatCard from "./StatCard";
 
-const resolutionByPriority = [
-  { priority: "Crítica", hours: 3 },
-  { priority: "Alta", hours: 2 },
-  { priority: "Media", hours: 1.8 },
-  { priority: "Baja", hours: 1.2 },
-];
+type ResolutionRow = {
+  label: string;
+  hours: number;
+};
 
-const representativeCases = [
-  { id: "INC-2026-0114", priority: "Crítica", hours: 3 },
-  { id: "INC-2026-0113", priority: "Alta", hours: 2 },
-  { id: "INC-2026-0116", priority: "Alta", hours: 1.5 },
-];
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Error desconocido al consultar la API.";
+}
 
-function exportReport() {
-  const rows = [
-    ["Incidencia", "Prioridad", "Tiempo de resolución (h)"],
-    ...representativeCases.map((item) => [
-      item.id,
-      item.priority,
-      String(item.hours),
-    ]),
+function exportReport(rows: ResolutionRow[]) {
+  const csvRows = [
+    ["Prioridad", "Tiempo promedio de resolución (h)"],
+    ...rows.map((item) => [item.label, String(item.hours)]),
   ];
-  const csv = rows
+  const csv = csvRows
     .map((row) => row.map((value) => `"${value.replaceAll('"', '""')}"`).join(","))
     .join("\r\n");
   const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
@@ -36,39 +39,91 @@ function exportReport() {
   URL.revokeObjectURL(url);
 }
 
-function PriorityChart() {
-  const maxHours = Math.max(...resolutionByPriority.map((item) => item.hours));
-
-  return (
-    <div
-      aria-label="Tiempo promedio de resolución por prioridad, en horas"
-      className="space-y-5"
-      role="img"
-    >
-      {resolutionByPriority.map((item) => (
-        <div key={item.priority}>
-          <div className="mb-2 flex items-center justify-between gap-3 text-sm">
-            <span className="font-medium text-slate-700">{item.priority}</span>
-            <span className="font-semibold tabular-nums text-[#102b3a]">
-              {item.hours.toLocaleString("es-MX", {
-                maximumFractionDigits: 1,
-              })}{" "}
-              h
-            </span>
-          </div>
-          <div className="h-3 overflow-hidden rounded-full bg-slate-100">
-            <div
-              className="h-full rounded-full bg-[#168f85]"
-              style={{ width: `${(item.hours / maxHours) * 100}%` }}
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+function metricValue(value: number | null) {
+  return value === null ? "—" : `${value.toLocaleString("es-MX", { maximumFractionDigits: 1 })} h`;
 }
 
 export default function ResolutionTimes() {
+  const [payload, setPayload] = useState<unknown>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const endpoint = `${API_BASE_URL}${endpoints.analista.resolutionTimes}`;
+    console.info("[Analista][resolution-times] Consultando API:", endpoint);
+
+    void getResolutionTimes(controller.signal)
+      .then((response) => {
+        console.info("[Analista][resolution-times] Respuesta recibida:", response);
+        setPayload(response);
+      })
+      .catch((requestError: unknown) => {
+        if (controller.signal.aborted) return;
+        console.error("[Analista][resolution-times] Error de API:", {
+          message: errorMessage(requestError),
+          status: requestError instanceof ApiError ? requestError.status : undefined,
+          body: requestError instanceof ApiError ? requestError.body : undefined,
+          error: requestError,
+        });
+        setError(errorMessage(requestError));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, []);
+
+  const metrics = nestedRecord(payload);
+  const rows = (readRows(payload, [
+    "byPriority",
+    "by_priority",
+    "priorityBreakdown",
+    "resolutionByPriority",
+    "data",
+    "items",
+    "results",
+  ]) ?? []).flatMap((row: ApiRecord) => {
+    const label = readText(row, ["priority", "label", "name"]);
+    const hours = readNumber(row, [
+      "averageHours",
+      "averageTime",
+      "avgCycleHours",
+      "avg_cycle_hours",
+      "average",
+      "avg",
+      "hours",
+      "value",
+    ]);
+    return label && hours !== null ? [{ label, hours }] : [];
+  });
+  const average = readNumber(metrics, [
+    "averageHours",
+    "averageTime",
+    "averageResolutionTime",
+    "avgResolutionTime",
+    "avgCycleHours",
+    "avg_cycle_hours",
+    "average",
+  ]);
+  const minimum = readNumber(metrics, [
+    "minimumHours",
+    "minimumTime",
+    "minResolutionTime",
+    "minCycleHours",
+    "min_cycle_hours",
+    "minimum",
+  ]);
+  const maximum = readNumber(metrics, [
+    "maximumHours",
+    "maximumTime",
+    "maxResolutionTime",
+    "maxCycleHours",
+    "max_cycle_hours",
+    "maximum",
+  ]);
+  const maxHours = Math.max(...rows.map((item) => item.hours), 1);
+
   return (
     <div className="mx-auto w-full max-w-[1400px]">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -80,24 +135,27 @@ export default function ResolutionTimes() {
             Tiempos de resolución
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            Análisis del tiempo empleado en la atención y resolución de
-            incidencias en campus central.
+            Análisis del tiempo empleado en la atención y resolución de incidencias.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-600">
-            Periodo:{" "}
-            <span className="font-medium text-[#102b3a]">Últimos 30 días</span>
-          </p>
-          <button
-            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-[#00685f] px-4 text-sm font-medium text-white transition hover:bg-[#00564f] focus:outline-none focus:ring-2 focus:ring-[#00685f]/30 focus:ring-offset-2"
-            onClick={exportReport}
-            type="button"
-          >
-            Exportar reporte
-          </button>
-        </div>
+        <button
+          className="inline-flex min-h-10 items-center justify-center rounded-lg bg-[#00685f] px-4 text-sm font-medium text-white transition hover:bg-[#00564f] focus:outline-none focus:ring-2 focus:ring-[#00685f]/30 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={loading || rows.length === 0}
+          onClick={() => exportReport(rows)}
+          type="button"
+        >
+          Exportar reporte
+        </button>
       </div>
+
+      {error && (
+        <p
+          className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
+          role="alert"
+        >
+          {error}
+        </p>
+      )}
 
       <section
         aria-label="Indicadores de tiempo de resolución"
@@ -105,19 +163,19 @@ export default function ResolutionTimes() {
       >
         <StatCard
           accent
-          detail="14% menos que el mes anterior"
+          detail="Promedio del conjunto consultado"
           label="Tiempo promedio"
-          value="2.1 h"
+          value={loading ? "…" : metricValue(average)}
         />
         <StatCard
-          detail="30 minutos"
+          detail="Menor tiempo registrado"
           label="Tiempo mínimo"
-          value="0.5 h"
+          value={loading ? "…" : metricValue(minimum)}
         />
         <StatCard
-          detail="Casos con escalación técnica"
+          detail="Mayor tiempo registrado"
           label="Tiempo máximo"
-          value="6.2 h"
+          value={loading ? "…" : metricValue(maximum)}
         />
       </section>
 
@@ -136,74 +194,36 @@ export default function ResolutionTimes() {
           </span>
         </div>
 
-        <div className="grid gap-7 xl:grid-cols-[1fr_0.9fr]">
-          <div className="rounded-lg bg-slate-50/70 p-4 sm:p-6">
-            <PriorityChart />
-          </div>
-
-          <div className="overflow-hidden rounded-lg border border-slate-200">
-            <div className="border-b border-slate-200 px-4 py-4">
-              <h4 className="text-sm font-semibold text-[#102b3a]">
-                Muestreo de casos representativos
-              </h4>
-              <p className="mt-1 text-xs text-slate-500">
-                {representativeCases.length} registros auditados
-              </p>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[390px] text-left">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th
-                      className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500"
-                      scope="col"
-                    >
-                      Incidencia
-                    </th>
-                    <th
-                      className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500"
-                      scope="col"
-                    >
-                      Prioridad
-                    </th>
-                    <th
-                      className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500"
-                      scope="col"
-                    >
-                      Tiempo
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {representativeCases.map((item) => (
-                    <tr className="hover:bg-slate-50/70" key={item.id}>
-                      <td className="whitespace-nowrap px-4 py-3.5 text-sm font-medium text-[#102b3a]">
-                        {item.id}
-                      </td>
-                      <td className="px-4 py-3.5 text-sm text-slate-600">
-                        {item.priority}
-                      </td>
-                      <td className="px-4 py-3.5 text-right text-sm font-semibold text-[#102b3a]">
-                        {item.hours} h
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-5 flex flex-wrap justify-between gap-2 border-t border-slate-100 pt-4 text-xs text-slate-500">
-          <p>
-            Fuente de demostración: colección{" "}
-            <span className="font-medium text-slate-700">
-              resolutions_analytics
-            </span>
-            .
+        {loading ? (
+          <p className="py-8 text-center text-sm text-slate-500" role="status">
+            Cargando tiempos de resolución...
           </p>
-          <p>Datos mock; sin conexión con la API.</p>
-        </div>
+        ) : rows.length ? (
+          <div className="space-y-5">
+            {rows.map((item) => (
+              <div key={item.label}>
+                <div className="mb-2 flex items-center justify-between gap-3 text-sm">
+                  <span className="font-medium text-slate-700">{item.label}</span>
+                  <span className="font-semibold tabular-nums text-[#102b3a]">
+                    {metricValue(item.hours)}
+                  </span>
+                </div>
+                <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full bg-[#168f85]"
+                    style={{ width: `${(item.hours / maxHours) * 100}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-lg bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+            {error
+              ? "No se pudieron cargar los tiempos."
+              : "La API no devolvió tiempos por prioridad en un formato reconocido."}
+          </p>
+        )}
       </section>
     </div>
   );

@@ -6,6 +6,8 @@ export const metadata: Metadata = {
   description: "Análisis de los tiempos de resolución de incidencias.",
 };
 
+export const instant = false;
+
 export default function ResolutionTimesPage() {
   return <ResolutionTimes />;
 }

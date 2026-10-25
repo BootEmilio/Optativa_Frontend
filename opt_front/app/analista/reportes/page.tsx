@@ -6,6 +6,8 @@ export const metadata: Metadata = {
   description: "Consulta de reportes de incidencias por distintos criterios.",
 };
 
+export const instant = false;
+
 export default function ReportsPage() {
   return <Reports />;
 }
