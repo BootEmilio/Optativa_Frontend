@@ -17,9 +17,11 @@ type QueryValue = string | number | boolean | undefined | null;
 export interface HttpRequestOptions extends Omit<RequestInit, 'body'> {
   query?: Record<string, QueryValue>;
   body?: unknown;
+  timeoutMs?: number;
 }
 
 const TOKEN_STORAGE_KEY = 'utm_desk_token';
+const DEFAULT_TIMEOUT_MS = 60_000; // 60s: el backend en Render duerme y puede tardar en despertar
 
 function buildUrl(path: string, query?: Record<string, QueryValue>): string {
   const url = new URL(path.startsWith('http') ? path : `${API_BASE_URL}${path}`);
@@ -64,30 +66,65 @@ export async function httpClient<T>(
   path: string,
   options: HttpRequestOptions = {}
 ): Promise<T> {
-  const { query, body, headers, ...rest } = options;
+  const {
+    query,
+    body,
+    headers,
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+    signal: userSignal,
+    ...rest
+  } = options;
   const url = buildUrl(path, query);
 
-  const response = await fetch(url, {
-    ...rest,
-    credentials: 'include',
-    headers: {
-      Accept: 'application/json',
-      ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
-      ...authHeaders(),
-      ...headers,
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  const controller = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
 
-  const parsed = await parseBody(response);
-
-  if (!response.ok) {
-    throw new ApiError(
-      messageFromBody(parsed, `Error ${response.status} al llamar ${path}`),
-      response.status,
-      parsed
-    );
+  if (userSignal) {
+    if (userSignal.aborted) {
+      controller.abort();
+    } else {
+      userSignal.addEventListener('abort', () => controller.abort(), { once: true });
+    }
   }
 
-  return parsed as T;
+  try {
+    const response = await fetch(url, {
+      ...rest,
+      signal: controller.signal,
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+        ...authHeaders(),
+        ...headers,
+      },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+
+    const parsed = await parseBody(response);
+
+    if (!response.ok) {
+      throw new ApiError(
+        messageFromBody(parsed, `Error ${response.status} al llamar ${path}`),
+        response.status,
+        parsed
+      );
+    }
+
+    return parsed as T;
+  } catch (error) {
+    if (timedOut) {
+      throw new ApiError(
+        `Tiempo de espera agotado (${Math.round(timeoutMs / 1000)}s) al llamar ${path}. El backend en Render puede estar iniciando. Por favor, reintenta en unos momentos.`,
+        408
+      );
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
 }

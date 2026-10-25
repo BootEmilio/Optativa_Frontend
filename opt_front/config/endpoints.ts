@@ -1,37 +1,58 @@
 /**
  * Contrato HTTP del módulo Coordinador.
- * Las rutas son una propuesta del frontend hasta que backend las confirme
- * (ver docs/DIAGNOSTICO_COORDINADOR.md sección 6).
+ * Base URL oficial del backend alojado en Render.
  */
 
 export const API_BASE_URL = (
-  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
+  process.env.NEXT_PUBLIC_API_URL ?? 'https://backend-incidencias-4paf.onrender.com'
 ).replace(/\/$/, '');
 
-/** Por defecto true: la UI sigue funcionando sin API. */
-export const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS !== 'false';
+/**
+ * Controla si se utilizan los datos simulados en memoria o el backend real.
+ * Con NEXT_PUBLIC_USE_MOCKS === 'true', se fuerzan los mocks locales.
+ * Por defecto (false o no definido), se conecta al backend real.
+ */
+export const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS === 'true';
 
 export const endpoints = {
   auth: {
-    me: '/auth/me',
+    // TODO: Endpoint de usuario actual/sesión cuando backend lo implemente
+    me: '/api/auth/me',
   },
   coordinador: {
-    incidencias: '/coordinador/incidencias',
-    incidencia: (id: string) => `/coordinador/incidencias/${encodeURIComponent(id)}`,
+    tecnicos: '/api/coordinador/tecnicos',
+    metricas: '/api/coordinador/metricas',
+    actividad: '/api/coordinador/actividad',
+    // Rutas de incidencias operadas por el coordinador
+    incidencias: '/api/incidencias',
+    incidencia: (id: string) => `/api/incidencias/${encodeURIComponent(id)}`,
     asignar: (id: string) =>
-      `/coordinador/incidencias/${encodeURIComponent(id)}/asignar`,
+      `/api/incidencias/${encodeURIComponent(id)}/asignar`,
     prioridad: (id: string) =>
-      `/coordinador/incidencias/${encodeURIComponent(id)}/prioridad`,
+      `/api/incidencias/${encodeURIComponent(id)}/prioridad`,
     cerrar: (id: string) =>
-      `/coordinador/incidencias/${encodeURIComponent(id)}/cerrar`,
+      `/api/incidencias/${encodeURIComponent(id)}/cerrar`,
     reabrir: (id: string) =>
-      `/coordinador/incidencias/${encodeURIComponent(id)}/reabrir`,
+      `/api/incidencias/${encodeURIComponent(id)}/reabrir`,
     tags: (id: string) =>
-      `/coordinador/incidencias/${encodeURIComponent(id)}/tags`,
+      `/api/incidencias/${encodeURIComponent(id)}/tags`,
     tag: (id: string, tag: string) =>
-      `/coordinador/incidencias/${encodeURIComponent(id)}/tags/${encodeURIComponent(tag)}`,
-    tecnicos: '/coordinador/tecnicos',
-    metricas: '/coordinador/metricas',
-    actividad: '/coordinador/actividad',
+      `/api/incidencias/${encodeURIComponent(id)}/tags/${encodeURIComponent(tag)}`,
+  },
+  incidencias: {
+    list: '/api/incidencias',
+    detail: (id: string) => `/api/incidencias/${encodeURIComponent(id)}`,
+    asignar: (id: string) =>
+      `/api/incidencias/${encodeURIComponent(id)}/asignar`,
+    prioridad: (id: string) =>
+      `/api/incidencias/${encodeURIComponent(id)}/prioridad`,
+    cerrar: (id: string) =>
+      `/api/incidencias/${encodeURIComponent(id)}/cerrar`,
+    reabrir: (id: string) =>
+      `/api/incidencias/${encodeURIComponent(id)}/reabrir`,
+    tags: (id: string) =>
+      `/api/incidencias/${encodeURIComponent(id)}/tags`,
+    tag: (id: string, tag: string) =>
+      `/api/incidencias/${encodeURIComponent(id)}/tags/${encodeURIComponent(tag)}`,
   },
 } as const;
