@@ -1,10 +1,14 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { ShieldCheckIcon } from './Icons';
+import { useAuth } from '../../context/AuthContext';
 import { useSession } from '../../context/SessionContext';
 
 export const Header: React.FC = () => {
+  const router = useRouter();
+  const { cerrarSesion } = useAuth();
   const { usuario, cargando } = useSession();
   const iniciales = usuario
     ? `${usuario.nombre[0] ?? ''}${usuario.apellidos[0] ?? ''}`
@@ -21,6 +25,16 @@ export const Header: React.FC = () => {
             {usuario?.area || 'Coordinación de Soporte'}
           </span>
         </div>
+        <button
+          className="rounded-lg border border-white/20 px-3 py-2 text-xs font-medium text-white transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40"
+          onClick={() => {
+            cerrarSesion();
+            router.replace('/login');
+          }}
+          type="button"
+        >
+          Cerrar sesión
+        </button>
       </div>
 
       <div className="flex items-center space-x-4">

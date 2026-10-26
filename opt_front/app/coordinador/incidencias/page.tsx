@@ -98,4 +98,6 @@ export default function CoordinadorIncidenciasPage() {
       <IncidenciasContent />
     </Suspense>
   );
+
+  
 }

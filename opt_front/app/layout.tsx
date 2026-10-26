@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/context/AuthContext";
+import { ReactNode } from "react";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -18,7 +19,11 @@ export const metadata: Metadata = {
   description: "Gestión y análisis de incidencias del campus.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+type LayoutProps = {
+  children: ReactNode;
+};
+
+export default function RootLayout({ children }: LayoutProps) {
   return (
     <html
       lang="es"

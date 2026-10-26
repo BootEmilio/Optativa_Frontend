@@ -550,4 +550,6 @@ export default function IncidenciaDetailPage() {
       <IncidenciaDetailContent />
     </Suspense>
   );
+
+        
 }

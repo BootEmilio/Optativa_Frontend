@@ -16,9 +16,14 @@ export default function CoordinadorLayout({
   return (
     <CoordinadorSessionProvider>
       <div className="flex min-h-screen bg-[#F8FAFC] text-[#27153D] antialiased">
-        <Suspense fallback={<aside className="w-64 bg-[#27153D] min-h-screen shrink-0" />}>
+        <Suspense
+          fallback={
+            <aside className="w-64 bg-[#27153D] min-h-screen shrink-0" />
+          }
+        >
           <Sidebar />
         </Suspense>
+
 
         <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
           <Header />
