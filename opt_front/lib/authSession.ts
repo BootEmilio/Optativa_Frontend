@@ -18,6 +18,8 @@ export type AuthSession = {
 export function getRoleHomePath(role: string) {
   if (role === 'coordinador_soporte') return '/coordinador';
   if (role === 'directivo_analista') return '/analista/dashboard';
+  if (role === 'reportante') return '/reportante';
+  if (role === 'tecnico_soporte') return '/tecnico_soporte';
   return '/login';
 }
 
