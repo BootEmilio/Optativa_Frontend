@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Sidebar } from '@/components/tecnico_soporte/Sidebar';
+import { AuthLogoutButton } from '@/components/AuthLogoutButton';
 import TecnicoAuthGuard from './components/TecnicoAuthGuard';
 
 export const metadata = {
@@ -31,13 +32,7 @@ export default function TecnicoSoporteLayout({ children }: { children: ReactNode
                   <circle cx="12" cy="8" r="4" />
                 </svg>
               </div>
-              <button type="button" className="flex h-9 w-9 items-center justify-center rounded-lg text-[#D7E9FF] transition hover:bg-white/5 hover:text-white" aria-label="Cerrar sesión">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                  <path d="M16 17 21 12 16 7" />
-                  <path d="M21 12H9" />
-                </svg>
-              </button>
+              <AuthLogoutButton variant="icon" />
             </div>
           </header>
 

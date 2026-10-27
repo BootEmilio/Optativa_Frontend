@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Sidebar } from '@/components/reportante/Sidebar';
+import { AuthLogoutButton } from '@/components/AuthLogoutButton';
 import ReportanteAuthGuard from './components/ReportanteAuthGuard';
 
 export const metadata = {
@@ -20,8 +21,11 @@ export default function ReportanteLayout({ children }: { children: ReactNode }) 
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#3F858D]">UTM Desk</p>
                 <h1 className="mt-1 text-xl font-semibold text-slate-800">Módulo reportante</h1>
               </div>
-              <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-slate-700">
-                Campus principal
+              <div className="flex items-center gap-3">
+                <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-slate-700">
+                  Campus principal
+                </div>
+                <AuthLogoutButton />
               </div>
             </div>
           </header>
