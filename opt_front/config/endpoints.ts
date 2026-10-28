@@ -54,6 +54,12 @@ export const endpoints = {
     detail: (id: string) => `/api/incidencias/${encodeURIComponent(id)}`,
     asignar: (id: string) =>
       `/api/incidencias/${encodeURIComponent(id)}/asignar`,
+    documentar: (id: string) =>
+      `/api/incidencias/${encodeURIComponent(id)}/documentar`,
+    horas: (id: string) =>
+      `/api/incidencias/${encodeURIComponent(id)}/horas`,
+    resolver: (id: string) =>
+      `/api/incidencias/${encodeURIComponent(id)}/resolver`,
     prioridad: (id: string) =>
       `/api/incidencias/${encodeURIComponent(id)}/prioridad`,
     cerrar: (id: string) =>
