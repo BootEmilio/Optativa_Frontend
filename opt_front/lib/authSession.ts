@@ -16,8 +16,12 @@ export type AuthSession = {
 };
 
 export function getRoleHomePath(role: string) {
-  if (role === 'coordinador_soporte') return '/coordinador';
-  if (role === 'directivo_analista') return '/analista/dashboard';
+  if (!role) return '/login';
+  const r = role.toLowerCase().trim();
+  if (r.includes('admin')) return '/admin';
+  if (r.includes('coord')) return '/coordinador';
+  if (r.includes('analist') || r.includes('directiv')) return '/analista/dashboard';
+  if (r.includes('report') || r.includes('docent') || r.includes('estudiant')) return '/reportante';
   return '/login';
 }
 
