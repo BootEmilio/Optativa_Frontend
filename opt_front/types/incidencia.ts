@@ -57,11 +57,12 @@ export interface ReportanteInfo {
   usuario_id: string;
   nombre: string;
   tipo: TipoReportante;
+  administrador_sistema?: boolean;
 }
 
 export interface TecnicoAsignadoInfo {
-  usuario_id: string;
-  nombre: string;
+  usuario_id: string | null;
+  nombre: string | null;
   correo?: string;
 }
 
@@ -98,4 +99,18 @@ export interface FiltrosIncidencias {
   prioridad?: PrioridadIncidencia | 'todas';
   categoria?: CategoriaIncidencia | 'todas';
   busqueda?: string;
+}
+
+/**
+ * Contrato de payload exacto para la creación de incidencias en backend:
+ * POST /api/incidencias
+ */
+export interface CrearIncidenciaInput {
+  titulo: string;
+  categoria: CategoriaIncidencia;
+  descripcion?: string;
+  ubicacion?: UbicacionIncidencia;
+  detalle_especifico?: Record<string, unknown>;
+  tags?: string[];
+  evidencias_adjuntas?: EvidenciaAdjunta[];
 }

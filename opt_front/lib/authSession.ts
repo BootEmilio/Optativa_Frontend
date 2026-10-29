@@ -20,6 +20,7 @@ export function getRoleHomePath(role: string) {
   if (role === 'directivo_analista') return '/analista/dashboard';
   if (role === 'reportante') return '/reportante';
   if (role === 'tecnico_soporte') return '/tecnico_soporte';
+  if (role === 'administrador') return '/admin';
   return '/login';
 }
 
