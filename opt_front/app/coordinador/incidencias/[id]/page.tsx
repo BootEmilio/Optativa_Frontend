@@ -411,7 +411,7 @@ function IncidenciaDetailContent() {
             {incidencia.tecnico_asignado ? (
               <div className="p-3 bg-[#F8F9FA]/40 rounded-lg border border-[#A6C9B6]/30 flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-full bg-[#A6C9B6]/25 text-[#3E828E] font-bold flex items-center justify-center text-sm shadow-xs">
-                  {incidencia.tecnico_asignado.nombre[0]}
+                  {incidencia.tecnico_asignado.nombre?.[0] ?? '?'}
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-[#27153D] truncate">

@@ -1,4 +1,4 @@
-import { RolClave } from './usuario';
+import { RolClave, Usuario } from './usuario';
 import {
   CategoriaIncidencia,
   UbicacionIncidencia,
@@ -56,14 +56,29 @@ export interface LogAuditoria {
   ip?: string;
 }
 
+/**
+ * Payload para crear incidencia desde el módulo Administrador.
+ * Campos requeridos por el schema Mongoose del backend:
+ *   titulo, descripcion, categoria, ubicacion.edificio
+ * El backend asigna automáticamente: reportante (JWT), prioridad, estado, codigo.
+ * evidencias_adjuntas se gestiona mediante un endpoint dedicado de carga.
+ */
 export interface NuevaIncidenciaAdminPayload {
+  // Requeridos por el schema backend
   titulo: string;
-  categoria: CategoriaIncidencia;
   descripcion: string;
+  categoria: CategoriaIncidencia;
+  // Ubicación: se puede pasar como objeto estructurado o como campos planos (uso interno)
   ubicacion: UbicacionIncidencia;
-  detalle_especifico: Record<string, unknown>;
+  // Campos planos de ubicación — alternativa al objeto (para compatibilidad interna)
+  edificio?: string;
+  piso?: string;
+  aula?: string;
+  referencia?: string;
+  // Opcionales
+  detalle_especifico?: Record<string, unknown>;
   tags?: string[];
-  evidencias_adjuntas?: EvidenciaAdjunta[];
+  // evidencias_adjuntas omitido: endpoint dedicado de carga de archivos
 }
 
 export interface CatalogoConfiguracion {

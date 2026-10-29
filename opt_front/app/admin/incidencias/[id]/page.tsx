@@ -15,13 +15,13 @@ import { TagManager } from '@/components/coordinador/TagManager';
 import { AssignTecnicoModal } from '@/components/coordinador/AssignTecnicoModal';
 import { CloseTicketModal } from '@/components/coordinador/CloseTicketModal';
 import { LoadError } from '@/components/coordinador/LoadError';
+import { EvidenciaUploader } from '@/components/admin/EvidenciaUploader';
 import {
   ArrowLeftIcon,
   UserIcon,
   CheckCircleIcon,
   RefreshIcon,
   BuildingIcon,
-  PaperClipIcon,
   ClockIcon,
   ShieldCheckIcon,
 } from '@/components/coordinador/Icons';
@@ -253,7 +253,7 @@ function AdminIncidenciaDetailContent() {
 
       {/* Main Detail Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column (8 cols): Ficha Técnica, Ubicación, Timeline */}
+        {/* Left Column (8 cols): Ficha Técnica, Evidencias, Timeline */}
         <div className="lg:col-span-8 space-y-6">
           {/* Ficha Técnica Card */}
           <div className="bg-white rounded-2xl border border-[#A6C9B6]/40 p-6 shadow-xs space-y-4">
@@ -361,32 +361,16 @@ function AdminIncidenciaDetailContent() {
                 </div>
               )}
 
-            {/* Evidencias Adjuntas */}
-            {incidencia.evidencias_adjuntas && incidencia.evidencias_adjuntas.length > 0 && (
-              <div className="pt-2 border-t border-gray-100">
-                <div className="flex items-center space-x-2 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                  <PaperClipIcon className="w-4 h-4 text-[#3E828E]" />
-                  <span>Evidencias Adjuntas ({incidencia.evidencias_adjuntas.length})</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  {incidencia.evidencias_adjuntas.map((ev, idx) => (
-                    <a
-                      key={idx}
-                      href={ev.url_storage}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2.5 rounded-lg border border-slate-200 hover:border-[#3E828E] hover:bg-slate-50 transition-colors flex items-center justify-between"
-                    >
-                      <div className="truncate">
-                        <p className="font-bold text-[#27153D] truncate">{ev.nombre_archivo}</p>
-                        <p className="text-[10px] text-gray-400">{ev.peso_kb} KB • {ev.tipo_mime}</p>
-                      </div>
-                      <span className="text-[#3E828E] font-bold text-[11px] ml-2">Ver ↗</span>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Evidencias Adjuntas — carga y visualización integradas */}
+            <EvidenciaUploader
+              incidenciaId={incidencia._id}
+              evidencias={incidencia.evidencias_adjuntas ?? []}
+              onEvidenciaAgregada={(nuevas) =>
+                setIncidencia((prev) =>
+                  prev ? { ...prev, evidencias_adjuntas: nuevas } : null
+                )
+              }
+            />
           </div>
 
           {/* Historial de Seguimiento (Timeline) */}
@@ -512,9 +496,12 @@ function AdminIncidenciaDetailContent() {
 
           {/* Información del Reportante */}
           <div className="bg-white rounded-2xl border border-[#A6C9B6]/40 p-5 shadow-xs space-y-3">
-            <h3 className="font-bold text-sm text-[#27153D]">
-              Datos del Reportante
-            </h3>
+            <div className="flex items-center space-x-2">
+              <ShieldCheckIcon className="w-4 h-4 text-[#3E828E]" />
+              <h3 className="font-bold text-sm text-[#27153D]">
+                Datos del Reportante
+              </h3>
+            </div>
             <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 space-y-1 text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-gray-500">Nombre:</span>

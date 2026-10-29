@@ -142,25 +142,33 @@ export const adminService = {
 
   /**
    * Registro directo de incidencias por parte del Administrador.
-   * Modo real: POST /api/incidencias — el backend deriva reportante del JWT.
+   * Modo real: POST /api/incidencias — el backend deriva reportante/estado/prioridad del JWT.
    * Modo mock: construye el objeto en memoria.
+   * Nota: evidencias_adjuntas se omite siempre — se gestiona con un endpoint dedicado.
    */
   async crearIncidencia(payload: NuevaIncidenciaAdminPayload): Promise<Incidencia> {
     if (!USE_MOCKS) {
-      // ── Modo real ────────────────────────────────────────────────────────────
-      // Solo se envían los campos que el backend acepta; reportante/prioridad/estado
-      // son derivados por el servidor a partir del JWT y valores predeterminados.
-      const body: Record<string, unknown> = {
-        titulo: payload.titulo.trim(),
-        categoria: payload.categoria,
+      // ── Modo real ─────────────────────────────────────────────────────────
+      // El schema Mongoose requiere: titulo, descripcion, categoria, ubicacion.edificio.
+      // El backend asigna reportante desde req.user.sub, prioridad='media', estado='abierta'.
+      const ubicacion = payload.ubicacion ?? {
+        edificio: payload.edificio ?? '',
+        piso: payload.piso,
+        aula: payload.aula,
+        referencia: payload.referencia,
       };
 
-      if (payload.descripcion?.trim()) body.descripcion = payload.descripcion.trim();
+      const body: Record<string, unknown> = {
+        titulo: payload.titulo.trim(),
+        descripcion: payload.descripcion!.trim(), // requerido por schema
+        categoria: payload.categoria,
+        ubicacion,                                 // edificio requerido en schema
+      };
+
+      // Campos opcionales
       if (payload.tags && payload.tags.length > 0) body.tags = payload.tags;
-      if (payload.evidencias_adjuntas && payload.evidencias_adjuntas.length > 0)
-        body.evidencias_adjuntas = payload.evidencias_adjuntas;
       if (payload.detalle_especifico) body.detalle_especifico = payload.detalle_especifico;
-      if (payload.ubicacion) body.ubicacion = payload.ubicacion;
+      // evidencias_adjuntas NO se envía aquí — endpoint dedicado de carga
 
       try {
         const raw = await httpClient<unknown>(endpoints.incidencias.list, {
@@ -174,13 +182,12 @@ export const adminService = {
         );
         return mapIncidencia(raw);
       } catch (err) {
-        // Re-lanza con mensaje legible
         if (err instanceof ApiError) throw err;
-        throw new Error('No se pudo crear la incidencia. Verifica tu conexión.');
+        throw new Error('No se pudo crear la incidencia. Verifica tu conexión o sesión.');
       }
     }
 
-    // ── Modo mock ──────────────────────────────────────────────────────────────
+    // ── Modo mock ──────────────────────────────────────────────────────────
     const codigoNumero = 100 + Math.floor(Math.random() * 900);
     const codigo = `INC-2026-0${codigoNumero}`;
     const id = generarId();
@@ -197,14 +204,18 @@ export const adminService = {
       reportante: {
         usuario_id: adminUser._id,
         nombre: `${adminUser.nombre} ${adminUser.apellidos}`,
-        tipo: adminUser.tipo_reportante ?? 'estudiante',
-        administrador_sistema: adminUser.rol === 'administrador_sistema',
+        tipo: adminUser.tipo_reportante ?? 'administrativo',
       },
       tecnico_asignado: null,
-      ubicacion: payload.ubicacion ?? { edificio: '' },
+      ubicacion: payload.ubicacion ?? {
+        edificio: payload.edificio ?? '',
+        piso: payload.piso,
+        aula: payload.aula,
+        referencia: payload.referencia,
+      },
       detalle_especifico: payload.detalle_especifico,
       tags: payload.tags || [],
-      evidencias_adjuntas: payload.evidencias_adjuntas,
+      evidencias_adjuntas: [],
       fecha_creacion: new Date().toISOString(),
       historial_seguimiento: [
         {
@@ -225,7 +236,6 @@ export const adminService = {
     );
     return simularLatencia(nueva);
   },
-
   /**
    * Operaciones sobre Incidencias (Asignar, Prioridad, Cierre, Reapertura, Tags)
    */
