@@ -1,5 +1,5 @@
 /**
- * Contrato HTTP del módulo Coordinador y Administrador.
+ * Contrato HTTP del módulo Coordinador.
  * Base URL oficial del backend alojado en Render.
  */
 
@@ -70,12 +70,5 @@ export const endpoints = {
       `/api/incidencias/${encodeURIComponent(id)}/tags`,
     tag: (id: string, tag: string) =>
       `/api/incidencias/${encodeURIComponent(id)}/tags/${encodeURIComponent(tag)}`,
-  },
-  admin: {
-    usuarios: '/api/admin/usuarios',
-    usuario: (id: string) => `/api/admin/usuarios/${encodeURIComponent(id)}`,
-    roles: '/api/admin/roles',
-    logs: '/api/admin/logs',
-    configuracion: '/api/admin/configuracion',
   },
 } as const;
