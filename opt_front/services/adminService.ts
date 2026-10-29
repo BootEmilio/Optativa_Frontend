@@ -150,15 +150,17 @@ export const adminService = {
       // ── Modo real ────────────────────────────────────────────────────────────
       // Solo se envían los campos que el backend acepta; reportante/prioridad/estado
       // son derivados por el servidor a partir del JWT y valores predeterminados.
-      const body = {
+      const body: Record<string, unknown> = {
         titulo: payload.titulo.trim(),
-        descripcion: payload.descripcion.trim(),
         categoria: payload.categoria,
-        ubicacion: payload.ubicacion,
-        detalle_especifico: payload.detalle_especifico,
-        tags: payload.tags ?? [],
-        evidencias_adjuntas: payload.evidencias_adjuntas ?? [],
       };
+
+      if (payload.descripcion?.trim()) body.descripcion = payload.descripcion.trim();
+      if (payload.tags && payload.tags.length > 0) body.tags = payload.tags;
+      if (payload.evidencias_adjuntas && payload.evidencias_adjuntas.length > 0)
+        body.evidencias_adjuntas = payload.evidencias_adjuntas;
+      if (payload.detalle_especifico) body.detalle_especifico = payload.detalle_especifico;
+      if (payload.ubicacion) body.ubicacion = payload.ubicacion;
 
       try {
         const raw = await httpClient<unknown>(endpoints.incidencias.list, {
