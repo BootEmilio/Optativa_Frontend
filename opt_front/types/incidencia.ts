@@ -1,6 +1,7 @@
 export type EstadoIncidencia =
   | 'abierta'
   | 'en_proceso'
+  | 'pendiente'
   | 'resuelta'
   | 'cerrada'
   | 'reabierta';

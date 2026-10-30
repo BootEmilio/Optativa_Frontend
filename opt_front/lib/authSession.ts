@@ -18,9 +18,11 @@ export type AuthSession = {
 export function getRoleHomePath(role: string) {
   if (!role) return '/login';
   const r = role.toLowerCase().trim();
+  if (r.includes('administrativ')) return '/reportante';
   if (r.includes('admin')) return '/admin';
   if (r.includes('coord')) return '/coordinador';
   if (r.includes('analist') || r.includes('directiv')) return '/analista/dashboard';
+  if (r.includes('tec') || r.includes('tecnic')) return '/tecnico_soporte';
   if (r.includes('report') || r.includes('docent') || r.includes('estudiant')) return '/reportante';
   return '/login';
 }
