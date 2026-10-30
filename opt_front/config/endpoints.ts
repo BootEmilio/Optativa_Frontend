@@ -17,8 +17,8 @@ export const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS === 'true';
 export const endpoints = {
   auth: {
     login: '/api/auth/login',
-    // TODO: Endpoint de usuario actual/sesión cuando backend lo implemente
-    me: '/api/auth/me',
+    perfil: '/api/auth/perfil',
+    me: '/api/auth/perfil',
   },
   coordinador: {
     tecnicos: '/api/coordinador/tecnicos',
@@ -58,6 +58,8 @@ export const endpoints = {
       `/api/incidencias/${encodeURIComponent(id)}/documentar`,
     horas: (id: string) =>
       `/api/incidencias/${encodeURIComponent(id)}/horas`,
+    estado: (id: string) =>
+      `/api/incidencias/${encodeURIComponent(id)}/estado`,
     resolver: (id: string) =>
       `/api/incidencias/${encodeURIComponent(id)}/resolver`,
     prioridad: (id: string) =>
@@ -70,6 +72,10 @@ export const endpoints = {
       `/api/incidencias/${encodeURIComponent(id)}/tags`,
     tag: (id: string, tag: string) =>
       `/api/incidencias/${encodeURIComponent(id)}/tags/${encodeURIComponent(tag)}`,
+    comentario: (id: string) =>
+      `/api/incidencias/${encodeURIComponent(id)}/comentario`,
+    evidencias: (id: string) =>
+      `/api/incidencias/${encodeURIComponent(id)}/evidencias`,
   },
   admin: {
     usuarios: '/api/admin/usuarios',

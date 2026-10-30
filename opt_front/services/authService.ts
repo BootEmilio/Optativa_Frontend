@@ -74,12 +74,24 @@ function extractUserRecord(
 ): Record<string, unknown> | null {
   if (isRecord(result.usuario)) return result.usuario;
   if (isRecord(result.user)) return result.user;
+  if (isRecord(result.perfil)) return result.perfil;
 
   if (isRecord(result.data)) {
     const nested = result.data;
     if (isRecord(nested.usuario)) return nested.usuario;
     if (isRecord(nested.user)) return nested.user;
+    if (isRecord(nested.perfil)) return nested.perfil;
     if ('email' in nested || 'correo' in nested) return nested;
+    if ('id' in nested || '_id' in nested || 'usuario_id' in nested) return nested;
+  }
+  if (
+    'id' in result ||
+    '_id' in result ||
+    'usuario_id' in result ||
+    'correo' in result ||
+    'email' in result
+  ) {
+    return result;
   }
 
   if (token) {
@@ -166,34 +178,65 @@ export async function login(correoInput: string, passwordInput: string): Promise
     (rawUser && typeof rawUser.email === 'string' && rawUser.email) ||
     correo;
 
+  const profileResponse = await httpClient<unknown>(endpoints.auth.perfil, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const profileUser = isRecord(profileResponse)
+    ? extractUserRecord(profileResponse, '')
+    : null;
+  if (!profileUser) {
+    throw new ApiError(
+      'El servidor no devolvió un perfil válido después de iniciar sesión.',
+      502,
+      profileResponse,
+    );
+  }
+
+  const profileEmail =
+    (typeof profileUser.correo === 'string' && profileUser.correo) ||
+    (typeof profileUser.email === 'string' && profileUser.email) ||
+    userEmail;
   const rawRole =
-    (rawUser && (rawUser.rol || rawUser.role || rawUser.tipo_usuario || rawUser.tipo)) ??
+    profileUser.rol ||
+    profileUser.role ||
+    profileUser.tipo_usuario ||
+    profileUser.tipo ||
+    rawUser?.rol ||
+    rawUser?.role ||
     'reportante';
-
-  const rol = normalizeRole(rawRole);
-
   const rawId =
-    (rawUser && (rawUser.id ?? rawUser._id ?? rawUser.usuario_id ?? rawUser.userId ?? rawUser.sub)) ??
-    `usr-${Date.now()}`;
-
+    profileUser.id ??
+    profileUser._id ??
+    profileUser.usuario_id ??
+    profileUser.userId ??
+    profileUser.sub ??
+    rawUser?.id ??
+    rawUser?._id ??
+    rawUser?.usuario_id;
+  if (typeof rawId !== 'string' || !rawId.trim()) {
+    throw new ApiError(
+      'El perfil del servidor no contiene el identificador del usuario.',
+      502,
+      profileResponse,
+    );
+  }
   const rawNombre =
-    (rawUser && typeof rawUser.nombre === 'string' && rawUser.nombre.trim() && rawUser.nombre) ||
-    (rawUser && typeof rawUser.name === 'string' && rawUser.name.trim() && rawUser.name) ||
-    (rawUser && typeof rawUser.nombre_completo === 'string' && rawUser.nombre_completo) ||
-    userEmail.split('@')[0];
-
-  const rawPermisos =
-    rawUser && Array.isArray(rawUser.permisos)
-      ? rawUser.permisos.filter((p): p is string => typeof p === 'string')
-      : rawUser && Array.isArray(rawUser.permissions)
-      ? rawUser.permissions.filter((p): p is string => typeof p === 'string')
+    (typeof profileUser.nombre === 'string' && profileUser.nombre.trim() && profileUser.nombre) ||
+    (typeof profileUser.name === 'string' && profileUser.name.trim() && profileUser.name) ||
+    (typeof profileUser.nombre_completo === 'string' && profileUser.nombre_completo) ||
+    profileEmail.split('@')[0];
+  const rawPermisos = Array.isArray(profileUser.permisos)
+    ? profileUser.permisos.filter((permission): permission is string => typeof permission === 'string')
+    : Array.isArray(profileUser.permissions)
+      ? profileUser.permissions.filter((permission): permission is string => typeof permission === 'string')
       : [];
 
   const usuario: AuthUser = {
-    id: String(rawId),
+    id: rawId,
     nombre: String(rawNombre),
-    correo: String(userEmail),
-    rol,
+    correo: profileEmail,
+    rol: normalizeRole(rawRole),
     permisos: rawPermisos,
   };
 
